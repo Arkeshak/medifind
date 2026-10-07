@@ -1,0 +1,17 @@
+{
+  "name": "live-stock-service",
+  "version": "1.0.0",
+  "description": "MediFind real-time stock updates over WebSocket",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.0",
+    "ws": "^8.18.0"
+  }
+}

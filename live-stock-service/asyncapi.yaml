@@ -1,0 +1,59 @@
+asyncapi: 2.0.0
+info:
+  title: MediFind Live Stock API
+  version: 1.0.0
+  description: Real-time stock change notifications for MediFind pharmacies.
+channels:
+  /:
+    publish:
+      summary: Messages the client sends
+      message:
+        oneOf:
+          - $ref: '#/components/messages/Subscribe'
+          - $ref: '#/components/messages/Ping'
+    subscribe:
+      summary: Messages the server pushes
+      message:
+        oneOf:
+          - $ref: '#/components/messages/StockChanged'
+          - $ref: '#/components/messages/Heartbeat'
+components:
+  messages:
+    Subscribe:
+      name: subscribe
+      payload:
+        type: object
+        properties:
+          type: { type: string, enum: [subscribe] }
+          pharmacyId: { type: integer, nullable: true, description: 'null = all pharmacies' }
+    Ping:
+      name: ping
+      payload:
+        type: object
+        properties:
+          type: { type: string, enum: [ping] }
+    StockChanged:
+      name: stock_changed
+      payload:
+        type: object
+        properties:
+          type: { type: string, enum: [stock_changed] }
+          eventId: { type: integer }
+          pharmacyId: { type: integer }
+          pharmacy: { type: string }
+          medicineId: { type: integer }
+          medicine: { type: string }
+          change: { type: integer }
+          quantity: { type: integer }
+          threshold: { type: integer }
+          status: { type: string, enum: [IN_STOCK, LOW_STOCK, OUT_OF_STOCK] }
+          source: { type: string, enum: [MANUAL, WEBHOOK, CSV_IMPORT] }
+          note: { type: string }
+          at: { type: string, format: date-time }
+    Heartbeat:
+      name: heartbeat
+      payload:
+        type: object
+        properties:
+          type: { type: string, enum: [heartbeat] }
+          time: { type: string, format: date-time }

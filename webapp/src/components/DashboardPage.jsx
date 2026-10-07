@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
+import { useLiveStock } from '../useLiveStock';
 
 const statusOf = (row) =>
   row.quantity === 0 ? 'OUT_OF_STOCK' : row.quantity <= row.low_stock_threshold ? 'LOW_STOCK' : 'IN_STOCK';
+
+const LIVE_LABEL = { live: '● Live', connecting: '○ Connecting…', reconnecting: '○ Reconnecting…', off: '○ Live updates off' };
+const SOURCE_LABEL = { MANUAL: 'Staff', WEBHOOK: 'Supplier', CSV_IMPORT: 'CSV import' };
 
 export default function DashboardPage() {
   const [pharmacies, setPharmacies] = useState([]);
@@ -10,6 +14,9 @@ export default function DashboardPage() {
   const [stock, setStock] = useState([]);
   const [edits, setEdits] = useState({});
   const [message, setMessage] = useState(null);
+  const [feed, setFeed] = useState([]);
+  const stockRef = useRef(stock);
+  stockRef.current = stock;
 
   useEffect(() => {
     api.pharmacies().then(setPharmacies).catch((e) => setMessage({ type: 'error', text: e.message }));
@@ -18,6 +25,7 @@ export default function DashboardPage() {
   const loadStock = async (id) => {
     setPharmacyId(id);
     setEdits({});
+    setFeed([]);
     if (!id) return setStock([]);
     try {
       setStock(await api.stock(id));
@@ -26,12 +34,29 @@ export default function DashboardPage() {
     }
   };
 
+  // ---- Live updates ----
+  const liveStatus = useLiveStock(pharmacyId, (evt) => {
+    setFeed((f) => [evt, ...f].slice(0, 10));
+    const known = stockRef.current.some((r) => r.medicine_id === evt.medicineId);
+    if (!known) {
+      loadStock(String(evt.pharmacyId)); // a new medicine was added (e.g. CSV import)
+      return;
+    }
+    setStock((rows) =>
+      rows.map((r) =>
+        r.medicine_id === evt.medicineId
+          ? { ...r, quantity: evt.quantity, low_stock_threshold: evt.threshold ?? r.low_stock_threshold, flashAt: Date.now() }
+          : r
+      )
+    );
+  });
+
   const run = async (action, successText) => {
     setMessage(null);
     try {
       await action();
       setMessage({ type: 'success', text: successText });
-      await loadStock(pharmacyId);
+      // No reload needed: the live update will refresh the row
     } catch (e) {
       setMessage({ type: 'error', text: e.message });
     }
@@ -56,7 +81,10 @@ export default function DashboardPage() {
 
   return (
     <section>
-      <h1>Pharmacy Dashboard</h1>
+      <div className="dash-head">
+        <h1>Pharmacy Dashboard</h1>
+        {pharmacyId && <span className={`live ${liveStatus}`}>{LIVE_LABEL[liveStatus]}</span>}
+      </div>
 
       <label className="muted">Select pharmacy: </label>
       <select value={pharmacyId} onChange={(e) => loadStock(e.target.value)}>
@@ -76,7 +104,7 @@ export default function DashboardPage() {
               {stock.map((row) => {
                 const status = statusOf(row);
                 return (
-                  <tr key={row.medicine_id}>
+                  <tr key={`${row.medicine_id}-${row.flashAt || 0}`} className={row.flashAt ? 'flash' : ''}>
                     <td>{row.medicine} <span className="muted">{row.strength}</span></td>
                     <td>{row.quantity}</td>
                     <td>{row.low_stock_threshold}</td>
@@ -99,6 +127,23 @@ export default function DashboardPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {pharmacyId && (
+        <div className="feed">
+          <h3>Live activity</h3>
+          {feed.length === 0 && <p className="muted">Waiting for stock changes…</p>}
+          {feed.map((e) => (
+            <div className="feed-item" key={e.eventId}>
+              <span className={`source ${e.source}`}>{SOURCE_LABEL[e.source] || e.source}</span>
+              <span>
+                <strong>{e.medicine}</strong> {e.change > 0 ? `+${e.change}` : e.change} → {e.quantity}
+                {e.note && <span className="muted"> · {e.note}</span>}
+              </span>
+              <span className="muted small">{new Date(e.at).toLocaleTimeString()}</span>
+            </div>
+          ))}
         </div>
       )}
     </section>

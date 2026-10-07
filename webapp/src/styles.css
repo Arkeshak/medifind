@@ -41,3 +41,19 @@ button.link { background: none; color: #0f766e; padding: 4px 0; font-weight: 600
 .drug-box { background: #f0fdfa; border-radius: 8px; padding: 10px 12px; margin-top: 6px; font-size: 0.88rem; }
 .drug-box p { margin: 6px 0; }
 .small { font-size: 0.78rem; }
+
+.dash-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.live { font-size: 0.85rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.live.live { background: #d1fae5; color: #065f46; }
+.live.connecting, .live.reconnecting { background: #fef3c7; color: #92400e; }
+.live.off { background: #e5e7eb; color: #4b5563; }
+tr.flash { animation: flash 2s ease-out; }
+@keyframes flash { from { background: #fde68a; } to { background: transparent; } }
+.feed { margin-top: 20px; background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.feed h3 { margin: 0 0 10px; font-size: 1rem; }
+.feed-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; flex-wrap: wrap; }
+.feed-item:last-child { border-bottom: none; }
+.source { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+.source.MANUAL { background: #dbeafe; color: #1e40af; }
+.source.WEBHOOK { background: #ede9fe; color: #5b21b6; }
+.source.CSV_IMPORT { background: #fce7f3; color: #9d174d; }

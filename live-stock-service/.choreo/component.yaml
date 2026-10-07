@@ -1,0 +1,19 @@
+schemaVersion: 1.2
+endpoints:
+  - name: live-stock
+    displayName: MediFind Live Stock
+    service:
+      basePath: /
+      port: 8080
+    type: WS
+    networkVisibilities:
+      - Public
+    schemaFilePath: asyncapi.yaml
+configurations:
+  env:
+    - name: DATABASE_URL
+      valueFrom:
+        configForm:
+          displayName: Database URL
+          type: secret
+          required: true
