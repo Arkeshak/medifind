@@ -7,6 +7,17 @@ const app = express();
 app.use(express.json({
   verify: (req, res, buf) => { req.rawBody = buf; },
 }));
+
+// Request logging: method, path, status, duration (visible in Choreo logs)
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    if (req.path === '/health') return; // skip noisy health checks
+    console.log(`${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms`);
+  });
+  next();
+});
+
 const PORT = process.env.PORT || 8080;
 
 const pool = new Pool({

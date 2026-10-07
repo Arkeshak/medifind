@@ -3,3 +3,4 @@ node_modules/
 dist/
 Config.toml
 target/
+!notification-service/tests/Config.toml
