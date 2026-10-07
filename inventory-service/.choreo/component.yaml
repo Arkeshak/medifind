@@ -1,0 +1,20 @@
+schemaVersion: 1.2
+endpoints:
+  - name: inventory-api
+    displayName: Inventory API
+    service:
+      basePath: /
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Public
+      - Organization
+    schemaFilePath: openapi.yaml
+configurations:
+  env:
+    - name: DATABASE_URL
+      valueFrom:
+        configForm:
+          displayName: Database URL
+          type: secret
+          required: true

@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: MediFind Inventory API
+  version: 1.0.0
+  description: Manage pharmacies, medicines and stock, and search medicine availability.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200': { description: Service is up }
+  /pharmacies:
+    get:
+      summary: List pharmacies
+      parameters:
+        - { name: city, in: query, required: false, schema: { type: string } }
+      responses:
+        '200': { description: List of pharmacies }
+    post:
+      summary: Create a pharmacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PharmacyInput' }
+      responses:
+        '201': { description: Pharmacy created }
+        '400': { description: Validation error }
+  /pharmacies/{id}:
+    get:
+      summary: Get a pharmacy
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: Pharmacy found }
+        '404': { description: Not found }
+  /pharmacies/{id}/stock:
+    get:
+      summary: Get all stock for a pharmacy
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: Stock list }
+  /medicines:
+    get:
+      summary: List medicines
+      responses:
+        '200': { description: List of medicines }
+    post:
+      summary: Create a medicine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicineInput' }
+      responses:
+        '201': { description: Medicine created }
+        '400': { description: Validation error }
+  /stock:
+    put:
+      summary: Set the stock quantity for a medicine at a pharmacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockSet' }
+      responses:
+        '200': { description: Stock updated }
+        '400': { description: Validation error }
+  /stock/adjust:
+    post:
+      summary: Add or remove stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StockAdjust' }
+      responses:
+        '200': { description: Stock adjusted }
+        '400': { description: Validation error }
+  /stock/low:
+    get:
+      summary: List low-stock and out-of-stock items
+      responses:
+        '200': { description: Low stock list }
+  /search:
+    get:
+      summary: Search medicine availability
+      parameters:
+        - { name: medicine, in: query, required: true, schema: { type: string } }
+        - { name: city, in: query, required: false, schema: { type: string } }
+      responses:
+        '200': { description: Search results }
+        '400': { description: Missing medicine parameter }
+components:
+  schemas:
+    PharmacyInput:
+      type: object
+      required: [name, address, city]
+      properties:
+        name: { type: string }
+        address: { type: string }
+        city: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+    MedicineInput:
+      type: object
+      required: [name, genericName]
+      properties:
+        name: { type: string }
+        genericName: { type: string }
+        strength: { type: string }
+        form: { type: string }
+        requiresPrescription: { type: boolean }
+    StockSet:
+      type: object
+      required: [pharmacyId, medicineId, quantity]
+      properties:
+        pharmacyId: { type: integer }
+        medicineId: { type: integer }
+        quantity: { type: integer, minimum: 0 }
+        lowStockThreshold: { type: integer }
+        price: { type: number }
+    StockAdjust:
+      type: object
+      required: [pharmacyId, medicineId, changeQty]
+      properties:
+        pharmacyId: { type: integer }
+        medicineId: { type: integer }
+        changeQty: { type: integer }
+        source: { type: string, enum: [MANUAL, WEBHOOK, CSV_IMPORT] }
+        note: { type: string }

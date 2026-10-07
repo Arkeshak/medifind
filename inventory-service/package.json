@@ -1,0 +1,1 @@
+{ "name": "inventory-service", "version": "1.0.0", "description": "MediFind Inventory Service", "main": "src/index.js", "scripts": { "start": "node src/index.js" }, "engines": { "node": ">=20" }, "dependencies": { "dotenv": "^16.4.5", "express": "^4.21.0", "pg": "^8.13.0" } }
