@@ -1,0 +1,15 @@
+schemaVersion: 1.2
+configurations:
+  env:
+    - name: DATABASE_URL
+      valueFrom:
+        configForm:
+          displayName: Database URL
+          type: secret
+          required: true
+    - name: ALERT_EMAIL_OVERRIDE
+      valueFrom:
+        configForm:
+          displayName: Alert email override (demo inbox)
+          type: string
+          required: false
