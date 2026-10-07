@@ -1,0 +1,20 @@
+schemaVersion: 1.2
+endpoints:
+  - name: search-graphql
+    displayName: MediFind Search GraphQL API
+    service:
+      basePath: /graphql
+      port: 8080
+    type: GraphQL
+    networkVisibilities:
+      - Public
+      - Organization
+    schemaFilePath: schema.graphql
+configurations:
+  env:
+    - name: DATABASE_URL
+      valueFrom:
+        configForm:
+          displayName: Database URL
+          type: secret
+          required: true

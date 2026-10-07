@@ -1,0 +1,44 @@
+type Query {
+  "Find where a medicine is available (matches brand or generic name)"
+  searchMedicines(name: String!, city: String, inStockOnly: Boolean): [Availability!]!
+  "List pharmacies, optionally filtered by city"
+  pharmacies(city: String): [Pharmacy!]!
+  "Get one pharmacy with its stock"
+  pharmacy(id: ID!): Pharmacy
+  "List all medicines"
+  medicines: [Medicine!]!
+}
+
+enum StockStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+type Pharmacy {
+  id: ID!
+  name: String!
+  address: String!
+  city: String!
+  phone: String
+  stock: [Availability!]!
+}
+
+type Medicine {
+  id: ID!
+  name: String!
+  genericName: String!
+  strength: String
+  form: String
+  requiresPrescription: Boolean!
+  availableAt(city: String): [Availability!]!
+}
+
+type Availability {
+  pharmacy: Pharmacy!
+  medicine: Medicine!
+  quantity: Int!
+  price: Float
+  status: StockStatus!
+  updatedAt: String
+}
