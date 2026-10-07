@@ -94,6 +94,20 @@ paths:
       responses:
         '200': { description: Search results }
         '400': { description: Missing medicine parameter }
+  /webhooks/supplier-delivery:
+    post:
+      summary: Supplier delivery webhook (HMAC-signed)
+      parameters:
+        - { name: X-Supplier-Signature, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierDelivery' }
+      responses:
+        '200': { description: Delivery applied or duplicate ignored }
+        '400': { description: Validation error }
+        '401': { description: Invalid signature }
 components:
   schemas:
     PharmacyInput:
@@ -134,3 +148,18 @@ components:
         changeQty: { type: integer }
         source: { type: string, enum: [MANUAL, WEBHOOK, CSV_IMPORT] }
         note: { type: string }
+    SupplierDelivery:
+      type: object
+      required: [deliveryId, supplier, pharmacyId, items]
+      properties:
+        deliveryId: { type: string }
+        supplier: { type: string }
+        pharmacyId: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            required: [medicineId, quantity]
+            properties:
+              medicineId: { type: integer }
+              quantity: { type: integer, minimum: 1 }

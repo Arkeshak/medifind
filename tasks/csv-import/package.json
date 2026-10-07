@@ -1,0 +1,17 @@
+{
+  "name": "csv-import",
+  "version": "1.0.0",
+  "description": "MediFind bulk stock import from CSV",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.0"
+  }
+}

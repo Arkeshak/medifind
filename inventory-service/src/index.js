@@ -1,9 +1,12 @@
 require('dotenv').config();
+const crypto = require('node:crypto');
 const express = require('express');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => { req.rawBody = buf; },
+}));
 const PORT = process.env.PORT || 8080;
 
 const pool = new Pool({
@@ -199,6 +202,77 @@ app.get('/search', wrap(async (req, res) => {
     [`%${medicine}%`, city ?? null]
   );
   res.json(rows);
+}));
+
+// ---------- SUPPLIER DELIVERY WEBHOOK ----------
+// The supplier signs the raw JSON body with a shared secret:
+//   X-Supplier-Signature: sha256=<hex HMAC-SHA256(body, secret)>
+function isValidSignature(req) {
+  const secret = process.env.SUPPLIER_WEBHOOK_SECRET;
+  const header = req.get('X-Supplier-Signature') || '';
+  if (!secret || !req.rawBody || !header.startsWith('sha256=')) return false;
+
+  const expected = crypto.createHmac('sha256', secret).update(req.rawBody).digest('hex');
+  const received = header.slice('sha256='.length);
+  const a = Buffer.from(expected, 'hex');
+  const b = Buffer.from(received, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+app.post('/webhooks/supplier-delivery', wrap(async (req, res) => {
+  if (!isValidSignature(req)) {
+    return res.status(401).json({ error: 'Invalid or missing signature' });
+  }
+
+  const { deliveryId, supplier, pharmacyId, items } = req.body;
+  if (!deliveryId || !supplier || !pharmacyId || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'deliveryId, supplier, pharmacyId and a non-empty items array are required' });
+  }
+  for (const item of items) {
+    if (!item.medicineId || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+      return res.status(400).json({ error: 'Each item needs a medicineId and a positive integer quantity' });
+    }
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Idempotency: suppliers often retry. The same deliveryId is only applied once.
+    const inserted = await client.query(
+      `INSERT INTO supplier_deliveries (delivery_id, supplier, pharmacy_id, item_count)
+       VALUES ($1, $2, $3, $4) ON CONFLICT (delivery_id) DO NOTHING RETURNING delivery_id`,
+      [deliveryId, supplier, pharmacyId, items.length]
+    );
+    if (inserted.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(200).json({ received: true, duplicate: true, message: 'Delivery already processed' });
+    }
+
+    for (const item of items) {
+      await client.query(
+        `INSERT INTO stock (pharmacy_id, medicine_id, quantity)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (pharmacy_id, medicine_id)
+         DO UPDATE SET quantity = stock.quantity + EXCLUDED.quantity, updated_at = NOW()`,
+        [pharmacyId, item.medicineId, item.quantity]
+      );
+      await client.query(
+        `INSERT INTO stock_events (pharmacy_id, medicine_id, change_qty, source, note)
+         VALUES ($1, $2, $3, 'WEBHOOK', $4)`,
+        [pharmacyId, item.medicineId, item.quantity, `Delivery ${deliveryId} from ${supplier}`]
+      );
+    }
+
+    await client.query('COMMIT');
+    console.log(`Supplier delivery ${deliveryId} applied: ${items.length} item(s) for pharmacy ${pharmacyId}`);
+    res.status(200).json({ received: true, duplicate: false, itemsUpdated: items.length });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }));
 
 // ---------- ERROR HANDLER ----------

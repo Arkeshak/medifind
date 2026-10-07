@@ -1,0 +1,21 @@
+schemaVersion: 1.2
+configurations:
+  env:
+    - name: DATABASE_URL
+      valueFrom:
+        configForm:
+          displayName: Database URL
+          type: secret
+          required: true
+    - name: CSV_URL
+      valueFrom:
+        configForm:
+          displayName: CSV file URL
+          type: string
+          required: true
+    - name: DRY_RUN
+      valueFrom:
+        configForm:
+          displayName: Dry run (true = validate only)
+          type: string
+          required: false

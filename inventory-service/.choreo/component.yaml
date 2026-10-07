@@ -18,3 +18,9 @@ configurations:
           displayName: Database URL
           type: secret
           required: true
+    - name: SUPPLIER_WEBHOOK_SECRET
+      valueFrom:
+        configForm:
+          displayName: Supplier webhook secret
+          type: secret
+          required: true
