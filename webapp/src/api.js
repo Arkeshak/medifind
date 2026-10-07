@@ -22,3 +22,24 @@ export const api = {
   adjust: (body) => request('/stock/adjust', { method: 'POST', body: JSON.stringify(body) }),
   setStock: (body) => request('/stock', { method: 'PUT', body: JSON.stringify(body) }),
 };
+
+// ---------- openFDA (through the Choreo API Proxy) ----------
+const FDA_BASE = import.meta.env.DEV ? '/local-fda' : (window.configs?.openFdaUrl || '');
+
+const firstText = (field) => (Array.isArray(field) ? field[0] : field) || null;
+const shorten = (text, max = 350) => (text && text.length > max ? `${text.slice(0, max)}…` : text);
+
+export async function getDrugInfo(genericName) {
+  const search = encodeURIComponent(`openfda.generic_name:"${genericName}"`);
+  const res = await fetch(`${FDA_BASE}/drug/label.json?search=${search}&limit=1`);
+  if (res.status === 404) return null; // openFDA returns 404 when there are no matches
+  if (res.status === 429) throw new Error('Drug info is busy right now. Try again in a minute.');
+  if (!res.ok) throw new Error(`Could not load drug info (${res.status})`);
+  const label = (await res.json()).results?.[0];
+  if (!label) return null;
+  return {
+    purpose: shorten(firstText(label.purpose) || firstText(label.indications_and_usage)),
+    warnings: shorten(firstText(label.warnings) || firstText(label.boxed_warning)),
+    dosage: shorten(firstText(label.dosage_and_administration)),
+  };
+}

@@ -11,6 +11,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/local-api/, ''),
       },
+      '/local-fda': {
+        target: 'https://api.fda.gov',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/local-fda/, ''),
+      },
     },
   },
 });
