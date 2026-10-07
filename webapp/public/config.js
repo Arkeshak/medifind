@@ -1,3 +1,3 @@
 window.configs = {
-  apiUrl: "/choreo-apis/REPLACE_ME",
+  apiUrl: "/choreo-apis/medifind/inventory-service/v1",
 };
