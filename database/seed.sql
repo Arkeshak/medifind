@@ -12,9 +12,9 @@ INSERT INTO medicines (name, generic_name, strength, form, requires_prescription
 
 INSERT INTO stock (pharmacy_id, medicine_id, quantity, low_stock_threshold, price) VALUES
 (1, 1, 200, 20, 5.00),
-(1, 2, 8,   10, 45.00),   -- low stock (for testing alerts)
-(1, 3, 0,   10, 12.00),   -- out of stock
+(1, 2, 8,   10, 45.00),
+(1, 3, 0,   10, 12.00),
 (2, 1, 150, 20, 5.00),
 (2, 4, 60,  10, 3.50),
-(3, 5, 5,   5,  850.00),  -- at the threshold
+(3, 5, 5,   5,  850.00),
 (3, 2, 40,  10, 45.00);
