@@ -3,8 +3,6 @@
 MediFind helps people find which nearby pharmacies have a medicine in stock, and helps pharmacies
 manage stock, receive supplier deliveries automatically, and get low-stock alerts.
 
-**Live app:** [your web app URL]
-**Demo video:** [YouTube/Drive link]
 
 ## Architecture
 
